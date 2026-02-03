@@ -22,7 +22,7 @@ public class FileUploadValidator
         }
 
         var fileValidationRes = ValidateFileInternal(
-            fileName,
+            fileName!,
             mimeType,
             fileInitialBytes,
             bytesRead
@@ -63,7 +63,7 @@ public class FileUploadValidator
 
     private static ValidationResult<FileUploadErrorDetails> ValidateFileName(string? filename)
     {
-        if (filename == null)
+        if (string.IsNullOrWhiteSpace(filename))
         {
             return new ValidationResult<FileUploadErrorDetails>
             {
