@@ -36,7 +36,7 @@ public class FileUploadController(
         }
         var response = await _fileService.UploadFile(boundary, Request.Body);
 
-        if (!response.IsSucess)
+        if (!response.IsSuccess)
         {
             return response.Status switch
             {

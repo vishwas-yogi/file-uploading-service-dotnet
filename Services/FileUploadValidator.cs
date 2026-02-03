@@ -7,7 +7,7 @@ namespace FileUploader.Services;
 public class FileUploadValidator
 {
     public ValidationResult<FileUploadErrorDetails> ValidateFile(
-        string fileName,
+        string? fileName,
         string mimeType,
         byte[] fileInitialBytes,
         int bytesRead
@@ -61,7 +61,7 @@ public class FileUploadValidator
         return new ValidationResult<FileUploadErrorDetails> { IsValid = true };
     }
 
-    private static ValidationResult<FileUploadErrorDetails> ValidateFileName(string filename)
+    private static ValidationResult<FileUploadErrorDetails> ValidateFileName(string? filename)
     {
         if (filename == null)
         {
@@ -99,7 +99,14 @@ public class FileUploadValidator
         }
 
         // Check for correct MIME types
-        if (string.IsNullOrEmpty(mimeType) || !(mimeType == matchedExtension.MimeType))
+        if (
+            string.IsNullOrEmpty(mimeType)
+            || !string.Equals(
+                mimeType,
+                matchedExtension.MimeType,
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
         {
             return new ValidationResult<FileUploadErrorDetails>
             {

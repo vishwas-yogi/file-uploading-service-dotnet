@@ -13,9 +13,9 @@ public class ServiceResult<TError>
     public ResponseStatus Status { get; protected init; }
     public TError? Error { get; protected init; }
 
-    public bool IsSucess => _sucessStatuses.Contains(Status);
+    public bool IsSuccess => _sucessStatuses.Contains(Status);
 
-    public static ServiceResult<TError> Sucess()
+    public static ServiceResult<TError> Success()
     {
         return new ServiceResult<TError> { Status = ResponseStatus.Success };
     }
