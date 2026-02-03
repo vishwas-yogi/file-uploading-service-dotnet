@@ -1,4 +1,4 @@
-using FileUploader.Interfaces;
+using FileUploader.Contracts;
 
 namespace FileUploader.Repositories;
 

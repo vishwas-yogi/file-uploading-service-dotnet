@@ -1,9 +1,10 @@
-using FileUploader.Interfaces;
+using FileUploader.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 
 namespace FileUploader.Controllers;
 
+// TODO: Add a cancellation token
 [ApiController]
 [Route("file")]
 public class FileUploadController(
@@ -33,7 +34,17 @@ public class FileUploadController(
         {
             return BadRequest("Boundary can't be null");
         }
-        var outputFilePath = await _fileService.UploadFile(boundary, Request.Body);
-        return Ok("File is located at: " + outputFilePath);
+        var response = await _fileService.UploadFile(boundary, Request.Body);
+
+        if (!response.IsSucess)
+        {
+            return response.Status switch
+            {
+                ResponseStatus.ValidationError => StatusCode(400, response.Error),
+                _ => StatusCode(500, "An unexpected error occurred"),
+            };
+        }
+
+        return Ok("File is located at: " + response.Data);
     }
 }

@@ -1,16 +1,23 @@
-using FileUploader.Interfaces;
+using FileUploader.Contracts;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 
 namespace FileUploader.Services;
 
-public class FileUploadService(IFileUploadRepository repository, ILogger<FileUploadService> logger)
-    : IFileUploadService
+public class FileUploadService(
+    IFileUploadRepository repository,
+    FileUploadValidator validator,
+    ILogger<FileUploadService> logger
+) : IFileUploadService
 {
     private readonly ILogger<FileUploadService> _logger = logger;
     private readonly IFileUploadRepository _repository = repository;
+    private readonly FileUploadValidator _validator = validator;
 
-    public async Task<string> UploadFile(string boundary, Stream uploadedFileStream)
+    public async Task<ServiceResult<string, FileUploadErrorDetails>> UploadFile(
+        string boundary,
+        Stream uploadedFileStream
+    )
     {
         string outputFileName = Guid.NewGuid().ToString();
         string outputFilePath = "";
@@ -21,36 +28,60 @@ public class FileUploadService(IFileUploadRepository repository, ILogger<FileUpl
         while ((section = await reader.ReadNextSectionAsync()) != null)
         {
             var contentDispositionHeader = section.GetContentDispositionHeader();
+            var mimeType = section.ContentType;
 
-            if (contentDispositionHeader == null)
+            var reqHeaderValidationResult = _validator.ValidateHeader(contentDispositionHeader);
+            if (!reqHeaderValidationResult.IsValid)
             {
-                _logger.LogError("The request must contain the content disposition header");
-                throw new InvalidOperationException(
-                    "The request must contain the content disposition header"
+                return ServiceResult<string, FileUploadErrorDetails>.ValidationError(
+                    reqHeaderValidationResult.Error!
                 );
             }
 
             Stream content = section.Body;
 
             // If it is a file write it to output file stream
-            if (contentDispositionHeader.IsFileDisposition())
+            if (contentDispositionHeader!.IsFileDisposition())
             {
-                var originalFileName = contentDispositionHeader.FileName.Value;
+                using var bufferedStream = new FileBufferingReadStream(section.Body, 1024 * 1024);
+                byte[] header = new byte[32];
+                // Used 32 bytes for peeking
+                // As some files like MP4 has its identifying marker slightly offset
+                int bytesRead = await bufferedStream.ReadAsync(header.AsMemory(0, 32));
+
+                var originalFileName = contentDispositionHeader!.FileName.Value;
+                var fileValidation = _validator.ValidateFile(
+                    originalFileName!,
+                    mimeType!,
+                    header,
+                    bytesRead
+                );
+
+                if (!fileValidation.IsValid)
+                {
+                    return ServiceResult<string, FileUploadErrorDetails>.ValidationError(
+                        fileValidation.Error!
+                    );
+                }
+
+                // Reset the stream after peeking
+                bufferedStream.Seek(0, SeekOrigin.Begin);
+
                 var extension = Path.GetExtension(originalFileName);
                 var finalOutputFileName = Path.ChangeExtension(outputFileName, extension);
 
                 _logger.LogInformation($"Processing file: {originalFileName}");
 
-                outputFilePath = await _repository.UploadFile(content, finalOutputFileName);
+                outputFilePath = await _repository.UploadFile(bufferedStream, finalOutputFileName);
                 totalBytesRead += content.Length;
             }
             // Else handle the metadata
-            else if (contentDispositionHeader.IsFormDisposition())
+            else if (contentDispositionHeader!.IsFormDisposition())
             {
                 // Converting content from Stream to string
                 using var streamReader = new StreamReader(content);
                 string value = await streamReader.ReadToEndAsync();
-                string key = contentDispositionHeader.Name.Value ?? "";
+                string key = contentDispositionHeader!.Name.Value ?? "";
 
                 // Just logging for now
                 _logger.LogInformation($"Metadata for file: {key} = {value}");
@@ -59,6 +90,6 @@ public class FileUploadService(IFileUploadRepository repository, ILogger<FileUpl
 
         _logger.LogInformation($"File upload completed. Total bytes read: {totalBytesRead} bytes");
 
-        return outputFilePath;
+        return ServiceResult<string, FileUploadErrorDetails>.Success(outputFilePath);
     }
 }

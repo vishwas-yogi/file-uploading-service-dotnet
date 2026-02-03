@@ -1,4 +1,4 @@
-namespace FileUploader.Interfaces;
+namespace FileUploader.Contracts;
 
 public interface IFileUploadRepository
 {
