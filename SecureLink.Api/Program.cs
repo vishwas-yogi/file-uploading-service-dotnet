@@ -1,6 +1,7 @@
-using FileUploader.Contracts;
-using FileUploader.Repositories;
-using FileUploader.Services;
+using SecureLink.Core.Contracts;
+using SecureLink.Core.Services;
+using SecureLink.Infrastructure.Repositories;
+using SecureLink.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

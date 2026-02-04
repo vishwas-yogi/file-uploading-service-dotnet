@@ -1,4 +1,4 @@
-namespace FileUploader.Contracts;
+namespace SecureLink.Core.Contracts;
 
 public class ValidationResult<TError>
 {

@@ -1,8 +1,15 @@
-using FileUploader.Contracts;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using SecureLink.Core.Contracts;
+using SecureLink.Core.Services;
+using SecureLink.Infrastructure.Repositories;
 
-namespace FileUploader.Services;
+// For now I have kept this service here as this assumes our file upload is HTTP based
+// As it deals with MultipartReader and MultipartSection
+// TODO: Maybe add a new parsing service that handles the parsing of the request
+// and we can make this service clean and move it to Core
+namespace SecureLink.Infrastructure.Services;
 
 public class FileUploadService(
     IFileUploadRepository repository,
