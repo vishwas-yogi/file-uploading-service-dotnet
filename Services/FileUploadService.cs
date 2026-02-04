@@ -1,8 +1,8 @@
-using FileUploader.Contracts;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
+using SecureLink.Contracts;
 
-namespace FileUploader.Services;
+namespace SecureLink.Services;
 
 public class FileUploadService(
     IFileUploadRepository repository,

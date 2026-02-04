@@ -1,4 +1,4 @@
-namespace FileUploader.Contracts;
+namespace SecureLink.Contracts;
 
 public interface IFileUploadRepository
 {

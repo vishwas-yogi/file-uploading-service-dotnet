@@ -1,6 +1,6 @@
-using FileUploader.Contracts;
+using SecureLink.Contracts;
 
-namespace FileUploader.Repositories;
+namespace SecureLink.Repositories;
 
 public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IFileUploadRepository
 {

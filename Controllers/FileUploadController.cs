@@ -1,8 +1,8 @@
-using FileUploader.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
+using SecureLink.Contracts;
 
-namespace FileUploader.Controllers;
+namespace SecureLink.Controllers;
 
 // TODO: Add a cancellation token
 [ApiController]

@@ -1,4 +1,4 @@
-namespace FileUploader.Contracts;
+namespace SecureLink.Contracts;
 
 // Base type
 public class ServiceResult<TError>
