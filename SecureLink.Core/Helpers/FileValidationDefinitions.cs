@@ -1,6 +1,6 @@
-using SecureLink.Contracts;
+using SecureLink.Core.Contracts;
 
-namespace SecureLink.Helpers;
+namespace SecureLink.Core.Helpers;
 
 public static class FileValidationDefinitions
 {

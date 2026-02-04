@@ -1,6 +1,7 @@
-using SecureLink.Contracts;
+using Microsoft.Extensions.Logging;
+using SecureLink.Core.Contracts;
 
-namespace SecureLink.Repositories;
+namespace SecureLink.Infrastructure.Repositories;
 
 public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IFileUploadRepository
 {

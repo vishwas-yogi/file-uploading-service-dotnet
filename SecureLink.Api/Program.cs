@@ -1,6 +1,7 @@
-using SecureLink.Contracts;
-using SecureLink.Repositories;
-using SecureLink.Services;
+using SecureLink.Core.Contracts;
+using SecureLink.Core.Services;
+using SecureLink.Infrastructure.Repositories;
+using SecureLink.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

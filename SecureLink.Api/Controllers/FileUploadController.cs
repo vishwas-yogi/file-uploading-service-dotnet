@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
-using SecureLink.Contracts;
+using SecureLink.Core.Contracts;
 
-namespace SecureLink.Controllers;
+namespace SecureLink.Api.Controllers;
 
 // TODO: Add a cancellation token
 [ApiController]
-[Route("file")]
+[Route("files")]
 public class FileUploadController(
     IFileUploadService fileService,
     ILogger<FileUploadController> logger

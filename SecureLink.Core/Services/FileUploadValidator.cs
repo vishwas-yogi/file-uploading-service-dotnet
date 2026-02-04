@@ -1,8 +1,8 @@
 using Microsoft.Net.Http.Headers;
-using SecureLink.Contracts;
-using static SecureLink.Helpers.FileValidationDefinitions;
+using SecureLink.Core.Contracts;
+using static SecureLink.Core.Helpers.FileValidationDefinitions;
 
-namespace SecureLink.Services;
+namespace SecureLink.Core.Services;
 
 public class FileUploadValidator
 {

@@ -1,4 +1,4 @@
-namespace SecureLink.Contracts;
+namespace SecureLink.Core.Contracts;
 
 // Base type
 public class ServiceResult<TError>
