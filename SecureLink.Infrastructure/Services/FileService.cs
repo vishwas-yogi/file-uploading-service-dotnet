@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using SecureLink.Core;
 using SecureLink.Core.Contracts;
-using SecureLink.Core.Services;
-using SecureLink.Infrastructure.Repositories;
 
 // For now I have kept this service here as this assumes our file upload is HTTP based
 // As it deals with MultipartReader and MultipartSection
@@ -12,16 +11,16 @@ using SecureLink.Infrastructure.Repositories;
 namespace SecureLink.Infrastructure.Services;
 
 public class FileUploadService(
-    IFileUploadRepository repository,
-    FileUploadValidator validator,
+    IFileRepository repository,
+    FileValidator validator,
     ILogger<FileUploadService> logger
-) : IFileUploadService
+) : IFileService
 {
     private readonly ILogger<FileUploadService> _logger = logger;
-    private readonly IFileUploadRepository _repository = repository;
-    private readonly FileUploadValidator _validator = validator;
+    private readonly IFileRepository _repository = repository;
+    private readonly FileValidator _validator = validator;
 
-    public async Task<ServiceResult<string, FileUploadErrorDetails>> UploadFile(
+    public async Task<ServiceResult<string, FileUploadErrorDetails>> Upload(
         string boundary,
         Stream uploadedFileStream
     )
@@ -79,7 +78,7 @@ public class FileUploadService(
 
                 _logger.LogInformation($"Processing file: {originalFileName}");
 
-                outputFilePath = await _repository.UploadFile(bufferedStream, finalOutputFileName);
+                outputFilePath = await _repository.Upload(bufferedStream, finalOutputFileName);
                 totalBytesRead += content.Length;
             }
             // Else handle the metadata
@@ -98,5 +97,26 @@ public class FileUploadService(
         _logger.LogInformation($"File upload completed. Total bytes read: {totalBytesRead} bytes");
 
         return ServiceResult<string, FileUploadErrorDetails>.Success(outputFilePath);
+    }
+
+    public async Task<ServiceResult<Stream, FileDownloadErrorDetails>> Download(string filename)
+    {
+        var fileValidation = await _validator.ValidateFileForDownload(filename);
+        if (!fileValidation.IsValid)
+            return ServiceResult<Stream, FileDownloadErrorDetails>.ValidationError(
+                fileValidation.Error!
+            );
+
+        try
+        {
+            var result = await _repository.Download(filename);
+            return ServiceResult<Stream, FileDownloadErrorDetails>.Success(result);
+        }
+        catch (FileNotFoundException)
+        {
+            return ServiceResult<Stream, FileDownloadErrorDetails>.ValidationError(
+                new FileDownloadErrorDetails { Error = "File not found" }
+            );
+        }
     }
 }
