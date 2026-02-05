@@ -10,7 +10,7 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IFileR
     public async Task<string> Upload(Stream file, string fileName)
     {
         var outputFilePath = GetFullFilePath(fileName);
-        RemoveFileIfExists(outputFilePath);
+        await RemoveFileIfExists(outputFilePath);
 
         // Constuct FileStream for the output file
         var options = new FileStreamOptions
@@ -29,7 +29,7 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IFileR
 
     public Task<Stream> Download(string fileName)
     {
-        _logger.LogInformation("Staring download of the requested file");
+        _logger.LogInformation("Starting download of the requested file");
         var filePath = GetFullFilePath(fileName);
 
         var options = new FileStreamOptions
@@ -37,7 +37,7 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IFileR
             Mode = FileMode.Open,
             Access = FileAccess.Read,
             Options = FileOptions.Asynchronous,
-            Share = FileShare.None,
+            Share = FileShare.Read, // So that mutiple downloads can happen parallely
         };
 
         var downloadStream = new FileStream(filePath, options);
@@ -61,7 +61,7 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IFileR
         return Task.FromResult(false);
     }
 
-    private async void RemoveFileIfExists(string filePath)
+    private async Task RemoveFileIfExists(string filePath)
     {
         if (await FileExistsInternal(filePath))
         {

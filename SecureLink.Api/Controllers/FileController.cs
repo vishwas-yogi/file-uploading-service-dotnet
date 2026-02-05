@@ -61,7 +61,7 @@ public class FileController(IFileService fileService, ILogger<FileController> lo
             return response.Status switch
             {
                 ResponseStatus.ValidationError => StatusCode(400, response.Error),
-                ResponseStatus.NotFound => StatusCode(200, response.Error),
+                ResponseStatus.NotFound => StatusCode(404, response.Error),
                 _ => StatusCode(500, "An unexpected error occurred"),
             };
         }

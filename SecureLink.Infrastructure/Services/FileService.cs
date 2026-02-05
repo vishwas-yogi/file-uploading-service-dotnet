@@ -107,7 +107,16 @@ public class FileUploadService(
                 fileValidation.Error!
             );
 
-        var result = await _repository.Download(filename);
-        return ServiceResult<Stream, FileDownloadErrorDetails>.Success(result);
+        try
+        {
+            var result = await _repository.Download(filename);
+            return ServiceResult<Stream, FileDownloadErrorDetails>.Success(result);
+        }
+        catch (FileNotFoundException)
+        {
+            return ServiceResult<Stream, FileDownloadErrorDetails>.ValidationError(
+                new FileDownloadErrorDetails { Error = "File not found" }
+            );
+        }
     }
 }
