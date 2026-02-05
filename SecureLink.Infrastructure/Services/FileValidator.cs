@@ -1,11 +1,14 @@
 using Microsoft.Net.Http.Headers;
+using SecureLink.Core;
 using SecureLink.Core.Contracts;
 using static SecureLink.Core.Helpers.FileValidationDefinitions;
 
-namespace SecureLink.Core.Services;
+namespace SecureLink.Infrastructure.Services;
 
-public class FileUploadValidator
+public class FileValidator(IFileRepository fileRepository)
 {
+    private readonly IFileRepository _repository = fileRepository;
+
     public ValidationResult<FileUploadErrorDetails> ValidateFile(
         string? fileName,
         string mimeType,
@@ -53,12 +56,29 @@ public class FileUploadValidator
         return new ValidationResult<FileUploadErrorDetails> { IsValid = true };
     }
 
-    public ValidationResult<FileUploadErrorDetails> ValidateMetaData()
+    public static ValidationResult<FileUploadErrorDetails> ValidateMetaData()
     {
         // TODO: Add some metadata validation
         // I couldn't think of any metadata validation for now
         // I'll add it later
         return new ValidationResult<FileUploadErrorDetails> { IsValid = true };
+    }
+
+    public async Task<ValidationResult<FileDownloadErrorDetails>> ValidateFileForDownload(
+        string filename
+    )
+    {
+        var fileExists = await _repository.FileExists(filename);
+
+        if (!fileExists)
+        {
+            return new ValidationResult<FileDownloadErrorDetails>
+            {
+                IsValid = false,
+                Error = new FileDownloadErrorDetails { Error = "File not found" },
+            };
+        }
+        return new ValidationResult<FileDownloadErrorDetails> { IsValid = true };
     }
 
     private static ValidationResult<FileUploadErrorDetails> ValidateFileName(string? filename)

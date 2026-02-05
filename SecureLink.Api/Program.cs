@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
 using SecureLink.Core.Contracts;
-using SecureLink.Core.Services;
 using SecureLink.Infrastructure.Repositories;
 using SecureLink.Infrastructure.Services;
 
@@ -9,10 +8,10 @@ const long maxFileLimit = 5L * 1024 * 1024 * 1024; // 5 GB
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+builder.Services.AddScoped<IFileService, FileUploadService>();
 
 // TODO: check on implementing a interface instead of directly injecting validator
-builder.Services.AddScoped<FileUploadValidator>();
+builder.Services.AddScoped<FileValidator>();
 
 // TODO: Add an S3 storage service as well.
 builder.Services.AddScoped<IFileRepository, LocalStoreRepository>();
