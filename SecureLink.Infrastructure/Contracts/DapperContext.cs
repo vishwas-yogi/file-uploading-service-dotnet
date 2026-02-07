@@ -12,12 +12,14 @@ public class DapperContext : IDapperContext
     public DapperContext(IOptions<DapperOptions> options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        _connectionString =
-            options.Value.ConnectionString
-            ?? throw new ArgumentException(
+        if (string.IsNullOrWhiteSpace(options.Value.ConnectionString))
+        {
+            throw new ArgumentException(
                 "ConnectionString must be provided in configuration",
                 nameof(options)
             );
+        }
+        _connectionString = options.Value.ConnectionString;
     }
 
     public IDbConnection CreateConnection()
