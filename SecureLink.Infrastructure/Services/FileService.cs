@@ -10,13 +10,13 @@ using SecureLink.Core.Contracts;
 // and we can make this service clean and move it to Core
 namespace SecureLink.Infrastructure.Services;
 
-public class FileUploadService(
+public class FileService(
     IFileRepository repository,
     FileValidator validator,
-    ILogger<FileUploadService> logger
+    ILogger<FileService> logger
 ) : IFileService
 {
-    private readonly ILogger<FileUploadService> _logger = logger;
+    private readonly ILogger<FileService> _logger = logger;
     private readonly IFileRepository _repository = repository;
     private readonly FileValidator _validator = validator;
 
@@ -76,7 +76,7 @@ public class FileUploadService(
                 var extension = Path.GetExtension(originalFileName);
                 var finalOutputFileName = Path.ChangeExtension(outputFileName, extension);
 
-                _logger.LogInformation($"Processing file: {originalFileName}");
+                _logger.LogInformation("Processing file: {originalFileName}", originalFileName);
 
                 outputFilePath = await _repository.Upload(bufferedStream, finalOutputFileName);
                 totalBytesRead += content.Length;
@@ -90,11 +90,14 @@ public class FileUploadService(
                 string key = contentDispositionHeader!.Name.Value ?? "";
 
                 // Just logging for now
-                _logger.LogInformation($"Metadata for file: {key} = {value}");
+                _logger.LogInformation("Metadata for file: {key} = {value}", key, value);
             }
         }
 
-        _logger.LogInformation($"File upload completed. Total bytes read: {totalBytesRead} bytes");
+        _logger.LogInformation(
+            "File upload completed. Total bytes read: {totalBytesRead} bytes",
+            totalBytesRead
+        );
 
         return ServiceResult<string, FileUploadErrorDetails>.Success(outputFilePath);
     }
