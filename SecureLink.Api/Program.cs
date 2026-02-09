@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http.HttpResults;
 using SecureLink.Core.Contracts;
 using SecureLink.Infrastructure.Contracts;
 using SecureLink.Infrastructure.Repositories;
@@ -41,6 +42,20 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+}
+
+if (app.Environment.IsDevelopment() || args.Contains("--migrate"))
+{
+    using var scope = app.Services.CreateScope();
+    var dapperContext = scope.ServiceProvider.GetRequiredService<IDapperContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<MigrationRunner>>();
+    var migrationsPath = Path.Combine(AppContext.BaseDirectory, "Migrations");
+    var migrationRunner = new MigrationRunner(dapperContext, logger, migrationsPath);
+    await migrationRunner.RunMigrations();
+
+    // In case of production
+    if (args.Contains("--migrate"))
+        return; // Exit after migrations, don't start the server
 }
 
 app.UseHttpsRedirection();

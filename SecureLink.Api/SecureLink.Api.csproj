@@ -14,4 +14,10 @@
     <ProjectReference Include="..\SecureLink.Core\SecureLink.Core.csproj" />
     <ProjectReference Include="..\SecureLink.Infrastructure\SecureLink.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Migrations\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
