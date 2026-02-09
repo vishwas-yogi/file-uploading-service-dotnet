@@ -95,6 +95,12 @@ public class MigrationRunner(
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
             );
 
+            if (parts.Length < 2)
+            {
+                _logger.LogWarning("Invalid migration file name: {fullName}", fullName);
+                continue;
+            }
+
             bool success = int.TryParse(parts[0], out var version);
             if (!success)
             {
