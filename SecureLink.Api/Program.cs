@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Http.HttpResults;
 using SecureLink.Core.Contracts;
 using SecureLink.Infrastructure.Contracts;
 using SecureLink.Infrastructure.Repositories;
@@ -8,6 +7,7 @@ using SecureLink.Infrastructure.Services;
 const long maxFileLimit = 5L * 1024 * 1024 * 1024; // 5 GB
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAuthentication();
 
 // Add services to the container.
 builder.Services.AddScoped<IFileService, FileService>();
