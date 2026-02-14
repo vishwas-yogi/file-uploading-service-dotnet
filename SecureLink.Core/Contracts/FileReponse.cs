@@ -2,12 +2,12 @@ namespace SecureLink.Core.Contracts;
 
 public record FileResponse
 {
-    public required Guid Id { get; set; }
-    public required string UserFilename { get; set; }
-    public required string ContentType { get; set; }
-    public required string Location { get; set; }
-    public required Guid Owner { get; set; }
-    public string Metadata { get; set; } = "{}";
-    public required DateTimeOffset? CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public required DateTimeOffset? LastModifiedAt { get; set; } = DateTimeOffset.UtcNow;
+    public required Guid Id { get; init; }
+    public required string UserFilename { get; init; }
+    public required string ContentType { get; init; }
+    public required string Location { get; init; }
+    public required Guid Owner { get; init; }
+    public string Metadata { get; init; } = "{}";
+    public required DateTimeOffset? CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    public required DateTimeOffset? LastModifiedAt { get; init; } = DateTimeOffset.UtcNow;
 }
