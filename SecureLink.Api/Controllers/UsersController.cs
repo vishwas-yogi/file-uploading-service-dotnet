@@ -1,17 +1,16 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using SecureLink.Core.Contracts;
 
 namespace SecureLink.Api.Controllers;
 
 [ApiController]
 [Route("users")]
-public class UsersControllers(IUsersService usersService, ILogger<UsersControllers> logger)
+public class UsersController(IUsersService usersService, ILogger<UsersController> logger)
     : ControllerBase
 {
     private readonly IUsersService _usersService = usersService;
-    private readonly ILogger<UsersControllers> _logger = logger;
+    private readonly ILogger<UsersController> _logger = logger;
 
     [HttpGet]
     [Route("")]
@@ -41,7 +40,10 @@ public class UsersControllers(IUsersService usersService, ILogger<UsersControlle
     [Route("")]
     public async Task<ActionResult<UserResponse>> CreateUser(CreateUserApiRequest request)
     {
-        _logger.LogInformation("Create user request initiated for request: {request}", request);
+        _logger.LogInformation(
+            "Create user request initiated for username : {username}",
+            request.Username
+        );
 
         var response = await _usersService.Create(
             new CreateUserRequest
@@ -117,7 +119,7 @@ public class UsersControllers(IUsersService usersService, ILogger<UsersControlle
                 new { id = (serviceResult.Data as UserResponse)!.Id },
                 serviceResult.Data
             ),
-            ResponseStatus.Deleted => StatusCode(204, "Successful"),
+            ResponseStatus.Deleted => StatusCode(204, null),
             _ => Ok(serviceResult.Data),
         };
     }

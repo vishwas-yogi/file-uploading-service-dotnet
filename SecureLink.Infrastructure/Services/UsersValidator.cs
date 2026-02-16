@@ -83,7 +83,7 @@ public class UsersValidator(IUsersRepository usersRepository) : IUsersValidator
         errors = new();
         await ValidateUsername(request.Username);
         await ValidateName(request.Name);
-        ValidateEmail(request.Email ?? "");
+        ValidateEmail(request.Email);
 
         if (HasErrors(errors))
         {

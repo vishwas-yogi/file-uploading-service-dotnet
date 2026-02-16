@@ -19,7 +19,10 @@ public class UsersService(
         CreateUserRequest request
     )
     {
-        _logger.LogInformation("Create user request started with request: {request}", request);
+        _logger.LogInformation(
+            "Create user request started with request for username: {username}",
+            request.Username
+        );
 
         var validationResult = await _validator.Validate(request);
         if (!validationResult.IsValid)
@@ -66,7 +69,10 @@ public class UsersService(
             );
         }
 
-        _logger.LogInformation("Get user request completed with response: {response}", user);
+        _logger.LogInformation(
+            "Get user request completed with response: {response}",
+            user.ToDto()
+        );
 
         return ServiceResult<UserResponse, ErrorDetails>.Success(user.ToDto());
     }

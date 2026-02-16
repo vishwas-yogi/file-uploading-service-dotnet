@@ -9,7 +9,7 @@ public class UsersRepository(IDapperContext dapperContext)
     : RepositoryBase(dapperContext),
         IUsersRepository
 {
-    private const string _selectaAllColumns = """
+    private const string _selectAllColumns = """
             users.id,
             users.name,
             users.username,
@@ -24,7 +24,6 @@ public class UsersRepository(IDapperContext dapperContext)
             users.name,
             users.username,
             users.email,
-            users.password_hash,
             users.created_at,
             users.last_modified_at
         """;
@@ -80,7 +79,7 @@ public class UsersRepository(IDapperContext dapperContext)
     public async Task<User?> GetById(Guid id)
     {
         var sql = $"""
-                SELECT {_selectaAllColumns}
+                SELECT {_selectAllColumns}
                 FROM users
                 WHERE users.id = @Id;
             """;
@@ -92,7 +91,7 @@ public class UsersRepository(IDapperContext dapperContext)
     public async Task<User?> GetByUsername(string username)
     {
         var sql = $"""
-                SELECT {_selectaAllColumns}
+                SELECT {_selectAllColumns}
                 FROM users
                 WHERE users.username = @Username;
             """;

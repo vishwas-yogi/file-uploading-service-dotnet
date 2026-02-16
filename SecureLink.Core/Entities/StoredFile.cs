@@ -1,6 +1,6 @@
 namespace SecureLink.Core.Entities;
 
-public class File
+public class StoredFile
 {
     public required Guid Id { get; set; }
     public required string Filename { get; set; }

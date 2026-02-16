@@ -3,7 +3,7 @@ namespace SecureLink.Core.Contracts;
 // Base type
 public class ServiceResult<TError>
 {
-    private static readonly HashSet<ResponseStatus> _sucessStatuses =
+    private static readonly HashSet<ResponseStatus> _successStatuses =
     [
         ResponseStatus.Success,
         ResponseStatus.Created,
@@ -13,7 +13,7 @@ public class ServiceResult<TError>
     public ResponseStatus Status { get; protected init; }
     public TError? Error { get; protected init; }
 
-    public bool IsSuccess => _sucessStatuses.Contains(Status);
+    public bool IsSuccess => _successStatuses.Contains(Status);
 
     public static ServiceResult<TError> Success()
     {

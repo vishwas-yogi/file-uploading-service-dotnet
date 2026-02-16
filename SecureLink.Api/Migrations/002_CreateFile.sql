@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS files
     user_filename     text NOT NULL,
     content_type      text NOT NULL,
     location          text NOT NULL,
-    owner     uuid    NOT NULL,
+    owner             uuid NOT NULL REFERENCES users(id),
     metadata jsonb    NOT NULL,
     created_at        timestamp with time zone NOT NULL,
     last_modified_at  timestamp with time zone NOT NULL

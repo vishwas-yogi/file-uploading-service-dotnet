@@ -6,6 +6,6 @@ public record UserResponse
     public required string Username { get; init; }
     public required string? Email { get; init; }
     public required string Name { get; init; }
-    public DateTimeOffset? CreatedAt { get; init; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset? LastModifiedAt { get; init; } = DateTimeOffset.UtcNow;
+    public required DateTimeOffset? CreatedAt { get; init; }
+    public required DateTimeOffset? LastModifiedAt { get; init; }
 }

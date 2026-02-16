@@ -6,5 +6,5 @@ public class RefreshToken
     public required Guid UserId { get; set; }
     public required string Value { get; set; }
     public required DateTimeOffset ExpiresAt { get; set; }
-    public required DateTimeOffset? CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
