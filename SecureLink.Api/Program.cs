@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Scalar.AspNetCore;
 using SecureLink.Core.Contracts;
 using SecureLink.Infrastructure.Contracts;
 using SecureLink.Infrastructure.Repositories;
@@ -8,6 +8,7 @@ using SecureLink.Infrastructure.Services;
 const long maxFileLimit = 5L * 1024 * 1024 * 1024; // 5 GB
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAuthentication();
 
 // Add services to the container.
 builder.Services.AddScoped<IFileService, FileService>();
@@ -19,6 +20,10 @@ builder.Services.AddScoped<FileValidator>();
 builder.Services.AddScoped<IFileRepository, LocalStoreRepository>();
 builder.Services.Configure<DapperOptions>(builder.Configuration.GetSection("Dapper"));
 builder.Services.AddSingleton<IDapperContext, DapperContext>();
+
+// User related services
+builder.Services.AddScoped<IUsersService, UsersService>();
+builder.Services.AddScoped<IUsersValidator, UsersValidator>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 
 builder.WebHost.ConfigureKestrel(options =>
@@ -38,10 +43,13 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 if (app.Environment.IsDevelopment() || args.Contains("--migrate"))
