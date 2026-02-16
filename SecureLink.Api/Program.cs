@@ -43,6 +43,8 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

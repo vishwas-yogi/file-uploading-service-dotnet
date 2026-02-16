@@ -8,6 +8,6 @@ public record FileResponse
     public required string Location { get; init; }
     public required Guid Owner { get; init; }
     public string Metadata { get; init; } = "{}";
-    public DateTimeOffset? CreatedAt { get; init; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset? LastModifiedAt { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? CreatedAt { get; init; }
+    public DateTimeOffset? LastModifiedAt { get; init; }
 }

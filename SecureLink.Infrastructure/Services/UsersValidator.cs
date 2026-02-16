@@ -8,12 +8,14 @@ namespace SecureLink.Infrastructure.Services;
 public class UsersValidator(IUsersRepository usersRepository) : IUsersValidator
 {
     private readonly IUsersRepository _usersRepo = usersRepository;
-    private User? _existingUser = null;
     private UserErrorDetails errors = new();
 
     public async Task<ValidationResult<UserErrorDetails>> Validate(CreateUserRequest request)
     {
-        return await Validate(new ValidationRequest(request.Username, request.Name, request.Email));
+        return await Validate(
+            new ValidationRequest(request.Username, request.Name, request.Email),
+            null
+        );
     }
 
     public async Task<ValidationResult<UserErrorDetails>> Validate(
@@ -21,17 +23,17 @@ public class UsersValidator(IUsersRepository usersRepository) : IUsersValidator
         User existingUser
     )
     {
-        _existingUser = existingUser;
         return await Validate(
             new ValidationRequest(
                 request.Username ?? existingUser.Username,
                 request.Name ?? existingUser.Name,
                 request.Email ?? existingUser.Email
-            )
+            ),
+            existingUser
         );
     }
 
-    private async Task ValidateUsername(string? username)
+    private async Task ValidateUsername(string? username, User? existingUser)
     {
         if (string.IsNullOrWhiteSpace(username))
         {
@@ -40,7 +42,7 @@ public class UsersValidator(IUsersRepository usersRepository) : IUsersValidator
         }
 
         var user = await _usersRepo.GetByUsername(username);
-        if (user is not null && (_existingUser is null || user.Id != _existingUser.Id))
+        if (user is not null && (existingUser is null || user.Id != existingUser.Id))
         {
             errors.Username = $"Username {username} is not unique";
             return;
@@ -78,10 +80,13 @@ public class UsersValidator(IUsersRepository usersRepository) : IUsersValidator
         }
     }
 
-    private async Task<ValidationResult<UserErrorDetails>> Validate(ValidationRequest request)
+    private async Task<ValidationResult<UserErrorDetails>> Validate(
+        ValidationRequest request,
+        User? existingUser
+    )
     {
         errors = new();
-        await ValidateUsername(request.Username);
+        await ValidateUsername(request.Username, existingUser);
         await ValidateName(request.Name);
         ValidateEmail(request.Email);
 
