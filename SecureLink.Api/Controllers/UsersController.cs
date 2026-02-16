@@ -60,10 +60,10 @@ public class UsersControllers(IUsersService usersService, ILogger<UsersControlle
     }
 
     [HttpPut]
-    [Route("id")]
+    [Route("{id}")]
     public async Task<ActionResult<UserResponse>> UpdateUser(
         [FromRoute] Guid id,
-        UpdateUserApiRequest request
+        [FromBody] UpdateUserApiRequest request
     )
     {
         _logger.LogInformation(
@@ -95,7 +95,7 @@ public class UsersControllers(IUsersService usersService, ILogger<UsersControlle
         var response = await _usersService.Delete(new DeleteUserRequest(id));
         _logger.LogInformation("Delete user completed for user id: {id}", id);
 
-        return Result(response as ServiceResult<string, ErrorDetails?>);
+        return Result(response);
     }
 
     private ObjectResult Result<TData, TError>(ServiceResult<TData, TError> serviceResult)

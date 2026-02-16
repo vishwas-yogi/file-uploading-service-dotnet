@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
+using Scalar.AspNetCore;
 using SecureLink.Core.Contracts;
 using SecureLink.Infrastructure.Contracts;
 using SecureLink.Infrastructure.Repositories;
@@ -46,6 +47,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 if (app.Environment.IsDevelopment() || args.Contains("--migrate"))
