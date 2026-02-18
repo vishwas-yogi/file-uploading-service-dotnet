@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 using SecureLink.Core.Contracts;
 using SecureLink.Infrastructure.Contracts;
+using SecureLink.Infrastructure.Helpers;
 using SecureLink.Infrastructure.Repositories;
 using SecureLink.Infrastructure.Services;
 
@@ -25,6 +27,12 @@ builder.Services.AddSingleton<IDapperContext, DapperContext>();
 builder.Services.AddScoped<IUsersService, UsersService>();
 builder.Services.AddScoped<IUsersValidator, UsersValidator>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
+
+
+// Auth related services
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.WebHost.ConfigureKestrel(options =>
 {
