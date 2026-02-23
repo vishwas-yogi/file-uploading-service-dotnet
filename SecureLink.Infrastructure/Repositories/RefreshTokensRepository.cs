@@ -27,7 +27,7 @@ public class RefreshTokensRepository(IDapperContext dapperContext)
                     @Id,
                     @UserId,
                     @Value,
-                    @ExpiresAt
+                    @ExpiresAt,
                     CURRENT_TIMESTAMP
                 );
             """;

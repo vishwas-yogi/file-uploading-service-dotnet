@@ -103,7 +103,9 @@ public class AuthService(
     {
         var userResponse = await _usersService.Get(new GetUserRequest(request.UserId));
         if (!userResponse.IsSuccess)
-            return ServiceResult<LoginResponse?, RefreshTokenErrorDetails>.Unauthorized(new RefreshTokenErrorDetails {Message = "Invalid user" });
+            return ServiceResult<LoginResponse?, RefreshTokenErrorDetails>.Unauthorized(
+                new RefreshTokenErrorDetails { Message = "Invalid user" }
+            );
 
         // 1. Refresh token is revoked: Security breach => looutFromAllDevices. Return error.
         // 2. Refresh token is user mismatched: Potential theft => logout. Return error.

@@ -59,18 +59,24 @@ public class AuthController(IAuthService authService, ITokenService tokenService
     [Authorize]
     public async Task<ActionResult<string>> Logout([FromBody] LogoutApiRequest request)
     {
+        var userId = User.GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized("Invalid user token");
+        }
+
         var response = await _authService.Logout(
-            new LogoutRequest { RefreshToken = request.RefreshToken, UserId = User.GetUserId() }
+            new LogoutRequest { RefreshToken = request.RefreshToken, UserId = userId.Value }
         );
 
         if (!response.IsSuccess)
         {
             if (response.Status == ResponseStatus.Unauthorized)
             {
-                return Unauthorized(response.Error!.Message);
+                return Unauthorized("Unauthorized User access");
             }
 
-            return StatusCode(500, response.Error!.Message);
+            return StatusCode(500, "Something went wrong");
         }
 
         return Ok("User logged out successfully");
@@ -94,12 +100,12 @@ public class AuthController(IAuthService authService, ITokenService tokenService
         {
             if (response.Status == ResponseStatus.Unauthorized)
             {
-                return Unauthorized(response.Error!.Message);
+                return Unauthorized("Unauthorized user");
             }
 
-            return StatusCode(500, response.Error!.Message);
+            return StatusCode(500, "Something went wrong");
         }
 
-        return Ok(response);
+        return Ok(response.Data);
     }
 }

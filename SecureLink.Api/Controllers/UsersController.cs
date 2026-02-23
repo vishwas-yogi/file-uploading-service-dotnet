@@ -1,9 +1,11 @@
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SecureLink.Core.Contracts;
 
 namespace SecureLink.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("users")]
 public class UsersController(IUsersService usersService, ILogger<UsersController> logger)
