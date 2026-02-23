@@ -1,9 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace SecureLink.Core.Contracts;
 
 public record RegisterApiRequest
 {
     public required string Username { get; init; }
+
+    [JsonIgnore]
     public required string Password { get; init; }
     public required string Name { get; init; }
-    public string? Email { get; init; } = null;
+    public string? Email { get; init; }
 }

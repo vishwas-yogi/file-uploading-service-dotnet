@@ -7,7 +7,7 @@ public class User
     public string? Email { get; set; }
     public required string Name { get; set; }
     public required string PasswordHash { get; set; }
-    public DateTimeOffset? CreatedAt { get; set; }
-    public DateTimeOffset? LastModifiedAt { get; set; }
+    public required DateTimeOffset CreatedAt { get; set; }
+    public required DateTimeOffset LastModifiedAt { get; set; }
     // TODO: add a field for soft delete
 }

@@ -163,9 +163,9 @@ public class AuthService(
                 new RefreshTokenErrorDetails { Message = "Invalid user" }
             );
 
+        await _tokenService.RevokeToken(request.RefreshToken);
         var newAccessToken = _tokenService.GenerateAccessToken(request.UserId);
         var newRefreshToken = await _tokenService.GenerateRefreshToken(request.UserId);
-        await _tokenService.RevokeToken(request.RefreshToken);
 
         return ServiceResult<LoginResponse?, RefreshTokenErrorDetails>.Success(
             new LoginResponse
