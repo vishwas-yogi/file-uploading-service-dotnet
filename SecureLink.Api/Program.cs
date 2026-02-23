@@ -13,7 +13,11 @@ const long maxFileLimit = 5L * 1024 * 1024 * 1024; // 5 GB
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+var jwtSettings =
+    builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
+    ?? throw new InvalidOperationException(
+        "Required configuration section 'JwtSettings' is missing or invalid."
+    );
 
 builder
     .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -23,7 +27,7 @@ builder
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings!.SecretKey)
+                Encoding.UTF8.GetBytes(jwtSettings.SecretKey)
             ),
             ValidateIssuer = true,
             ValidIssuer = jwtSettings.Issuer,

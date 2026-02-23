@@ -7,4 +7,9 @@ public class JwtSettings
     public required int AccessTokenExpirationInMinutes { get; set; }
     public required int RefreshTokenExpirationInHours { get; set; }
     public required string SecretKey { get; set; }
+
+    public override string ToString() =>
+        $"JwtSettings {{ Issuer = {Issuer}, Audience = {Audience}, "
+        + $"AccessTokenExpirationInMinutes = {AccessTokenExpirationInMinutes}, "
+        + $"RefreshTokenExpirationInHours = {RefreshTokenExpirationInHours}, SecretKey = *** }}";
 }

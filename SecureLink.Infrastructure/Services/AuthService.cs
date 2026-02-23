@@ -88,6 +88,10 @@ public class AuthService(
                 await _tokenService.RevokeToken(request.RefreshToken);
                 return ServiceResult<bool, RefreshTokenErrorDetails>.Unauthorized(error);
             }
+
+            return ServiceResult<bool, RefreshTokenErrorDetails>.Unauthorized(
+                new RefreshTokenErrorDetails { Message = "Invalid refresh token" }
+            );
         }
 
         // In all other cases, the current token can be revoked

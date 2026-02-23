@@ -58,16 +58,19 @@ public partial class AuthValidator(IRefreshTokensRepository refreshTokensReposit
             };
         }
 
+        var isRevoked = refreshToken.RevokedAt is not null;
+        var isExpired = refreshToken.ExpiresAt < DateTimeOffset.UtcNow;
+
         // TODO: maybe add a grace period for revokedAt and expiredAt. If inconsistencies are observed during concurrent requests
-        if (refreshToken.RevokedAt is not null || refreshToken.ExpiresAt < DateTime.UtcNow)
+        if (isRevoked || isExpired)
         {
             return new ValidationResult<RefreshTokenErrorDetails>
             {
                 IsValid = false,
                 Error = new RefreshTokenErrorDetails
                 {
-                    IsRevoked = refreshToken.RevokedAt is not null,
-                    IsExpired = refreshToken.ExpiresAt < DateTime.UtcNow,
+                    IsRevoked = isRevoked,
+                    IsExpired = isExpired,
                 },
             };
         }
