@@ -75,7 +75,7 @@ public class FileValidator(IFileRepository fileRepository)
             return new ValidationResult<FileDownloadErrorDetails>
             {
                 IsValid = false,
-                Error = new FileDownloadErrorDetails { Error = "File not found" },
+                Error = new FileDownloadErrorDetails { Error = $"File '{filename}' not found" },
             };
         }
         return new ValidationResult<FileDownloadErrorDetails> { IsValid = true };
@@ -114,7 +114,10 @@ public class FileValidator(IFileRepository fileRepository)
             return new ValidationResult<FileUploadErrorDetails>
             {
                 IsValid = false,
-                Error = new FileUploadErrorDetails { Message = "Unsupported file type" },
+                Error = new FileUploadErrorDetails
+                {
+                    Message = $"Unsupported file type {extension} for '{filename}'",
+                },
             };
         }
 
@@ -131,7 +134,10 @@ public class FileValidator(IFileRepository fileRepository)
             return new ValidationResult<FileUploadErrorDetails>
             {
                 IsValid = false,
-                Error = new FileUploadErrorDetails { Message = "Invalid MIME type" },
+                Error = new FileUploadErrorDetails
+                {
+                    Message = $"Invalid / Unsupported MIME type '{mimeType}' for file '{filename}'",
+                },
             };
         }
 
@@ -143,7 +149,7 @@ public class FileValidator(IFileRepository fileRepository)
                 IsValid = false,
                 Error = new FileUploadErrorDetails
                 {
-                    Message = "File is too small to be a valid file.",
+                    Message = $"File '{filename}' is too small to be a valid file.",
                 },
             };
         }
@@ -162,7 +168,10 @@ public class FileValidator(IFileRepository fileRepository)
                 return new ValidationResult<FileUploadErrorDetails>
                 {
                     IsValid = false,
-                    Error = new FileUploadErrorDetails { Message = "Invalid file signature" },
+                    Error = new FileUploadErrorDetails
+                    {
+                        Message = $"Invalid file signature for file '{filename}'",
+                    },
                 };
             }
         }

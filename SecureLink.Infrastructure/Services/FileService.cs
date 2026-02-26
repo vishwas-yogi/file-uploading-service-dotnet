@@ -3,30 +3,30 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using SecureLink.Core;
 using SecureLink.Core.Contracts;
+using SecureLink.Infrastructure.Contracts;
+using SecureLink.Infrastructure.Repositories;
 
-// For now I have kept this service here as this assumes our file upload is HTTP based
-// As it deals with MultipartReader and MultipartSection
-// TODO: Maybe add a new parsing service that handles the parsing of the request
-// and we can make this service clean and move it to Core
 namespace SecureLink.Infrastructure.Services;
 
-public class FileService(
+public class FilesService(
     IFileRepository repository,
     FileValidator validator,
-    ILogger<FileService> logger
-) : IFileService
+    FileRepository fileRepository,
+    ILogger<FilesService> logger
+) : IFilesService
 {
-    private readonly ILogger<FileService> _logger = logger;
+    private readonly ILogger<FilesService> _logger = logger;
     private readonly IFileRepository _repository = repository;
     private readonly FileValidator _validator = validator;
+    private readonly FileRepository _fileRepository = fileRepository;
 
-    public async Task<ServiceResult<string, FileUploadErrorDetails>> Upload(
+    public async Task<ServiceResult<List<string>, FileUploadErrorDetails>> Upload(
         string boundary,
-        Stream uploadedFileStream
+        Stream uploadedFileStream,
+        Guid currentUser
     )
     {
-        string outputFileName = Guid.NewGuid().ToString();
-        string outputFilePath = "";
+        List<string> outputFilePaths = [];
         var reader = new MultipartReader(boundary, uploadedFileStream);
         MultipartSection? section;
         long totalBytesRead = 0;
@@ -34,12 +34,12 @@ public class FileService(
         while ((section = await reader.ReadNextSectionAsync()) != null)
         {
             var contentDispositionHeader = section.GetContentDispositionHeader();
-            var mimeType = section.ContentType;
+            var contentType = section.ContentType;
 
             var reqHeaderValidationResult = _validator.ValidateHeader(contentDispositionHeader);
             if (!reqHeaderValidationResult.IsValid)
             {
-                return ServiceResult<string, FileUploadErrorDetails>.ValidationError(
+                return ServiceResult<List<string>, FileUploadErrorDetails>.ValidationError(
                     reqHeaderValidationResult.Error!
                 );
             }
@@ -49,6 +49,7 @@ public class FileService(
             // If it is a file write it to output file stream
             if (contentDispositionHeader!.IsFileDisposition())
             {
+                string outputFileName = Guid.NewGuid().ToString();
                 using var bufferedStream = new FileBufferingReadStream(section.Body, 1024 * 1024);
                 byte[] header = new byte[32];
                 // Used 32 bytes for peeking
@@ -58,14 +59,14 @@ public class FileService(
                 var originalFileName = contentDispositionHeader!.FileName.Value;
                 var fileValidation = _validator.ValidateFile(
                     originalFileName!,
-                    mimeType!,
+                    contentType!,
                     header,
                     bytesRead
                 );
 
                 if (!fileValidation.IsValid)
                 {
-                    return ServiceResult<string, FileUploadErrorDetails>.ValidationError(
+                    return ServiceResult<List<string>, FileUploadErrorDetails>.ValidationError(
                         fileValidation.Error!
                     );
                 }
@@ -78,7 +79,28 @@ public class FileService(
 
                 _logger.LogInformation("Processing file: {originalFileName}", originalFileName);
 
-                outputFilePath = await _repository.Upload(bufferedStream, finalOutputFileName);
+                var repoRequest = new FilePersistRepoRequest
+                {
+                    Filename = finalOutputFileName,
+                    UserFilename = originalFileName!,
+                    Owner = currentUser,
+                    ContentType = contentType!,
+                };
+
+                var result = await Persist(
+                    new FilePersistInternalRequest
+                    {
+                        RepoRequest = repoRequest,
+                        UploadedFileStream = bufferedStream,
+                    }
+                );
+
+                if (!result.IsSuccess)
+                    return ServiceResult<List<string>, FileUploadErrorDetails>.UnexpectedError(
+                        result.Error!
+                    );
+
+                outputFilePaths.Add(result.Data!);
                 totalBytesRead += content.Length;
             }
             // Else handle the metadata
@@ -99,7 +121,7 @@ public class FileService(
             totalBytesRead
         );
 
-        return ServiceResult<string, FileUploadErrorDetails>.Success(outputFilePath);
+        return ServiceResult<List<string>, FileUploadErrorDetails>.Success(outputFilePaths);
     }
 
     public async Task<ServiceResult<Stream, FileDownloadErrorDetails>> Download(string filename)
@@ -121,5 +143,63 @@ public class FileService(
                 new FileDownloadErrorDetails { Error = "File not found" }
             );
         }
+    }
+
+    private async Task<ServiceResult<string, FileUploadErrorDetails>> Persist(
+        FilePersistInternalRequest request
+    )
+    {
+        try
+        {
+            Guid fileId = await _fileRepository.Persist(request.RepoRequest);
+            if (fileId == Guid.Empty)
+                return ServiceResult<string, FileUploadErrorDetails>.UnexpectedError(
+                    new FileUploadErrorDetails
+                    {
+                        Message = "Failed to initialize file record in the db.",
+                    }
+                );
+
+            string uplaodedFileLocation = await _repository.Upload(
+                request.UploadedFileStream,
+                request.RepoRequest.Filename
+            );
+            if (string.IsNullOrEmpty(uplaodedFileLocation))
+                return ServiceResult<string, FileUploadErrorDetails>.UnexpectedError(
+                    new FileUploadErrorDetails
+                    {
+                        Message = "Failed to upload file to storage service ",
+                    }
+                );
+
+            var updated = await _fileRepository.MarkFileAvailable(fileId, uplaodedFileLocation);
+            if (!updated)
+                return ServiceResult<string, FileUploadErrorDetails>.UnexpectedError(
+                    new FileUploadErrorDetails { Message = "Failed to mark the file as available" }
+                );
+
+            return ServiceResult<string, FileUploadErrorDetails>.Success(uplaodedFileLocation);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Unexpected error while uploading file {filename}",
+                request.RepoRequest.Filename
+            );
+            return ServiceResult<string, FileUploadErrorDetails>.UnexpectedError(
+                new FileUploadErrorDetails
+                {
+                    Message =
+                        $"Something went wrong while uplaoding file: {request.RepoRequest.UserFilename}",
+                }
+            );
+        }
+    }
+
+    private record FilePersistInternalRequest
+    {
+        public required FilePersistRepoRequest RepoRequest { get; init; }
+        public required Stream UploadedFileStream { get; init; }
     }
 }

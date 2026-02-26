@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace SecureLink.Core.Contracts;
 
 public record CreateUserApiRequest

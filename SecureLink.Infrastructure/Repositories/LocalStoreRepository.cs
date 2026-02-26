@@ -72,7 +72,7 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IFileR
 
     private static string GetOutputDir()
     {
-        string outDir = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+        string outDir = Path.Combine("/home/vishwas-yogi/personal", "uploads");
         if (!Directory.Exists(outDir))
         {
             Directory.CreateDirectory(outDir);

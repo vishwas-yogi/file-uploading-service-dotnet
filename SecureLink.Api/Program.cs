@@ -40,8 +40,8 @@ builder
 
 builder.Services.AddAuthorization();
 
-// Add services to the container.
-builder.Services.AddScoped<IFileService, FileService>();
+// File related services.
+builder.Services.AddScoped<IFilesService, FilesService>();
 
 // TODO: check on implementing a interface instead of directly injecting validator
 builder.Services.AddScoped<FileValidator>();
@@ -50,6 +50,7 @@ builder.Services.AddScoped<FileValidator>();
 builder.Services.AddScoped<IFileRepository, LocalStoreRepository>();
 builder.Services.Configure<DapperOptions>(builder.Configuration.GetSection("Dapper"));
 builder.Services.AddSingleton<IDapperContext, DapperContext>();
+builder.Services.AddScoped<FileRepository>();
 
 // User related services
 builder.Services.AddScoped<IUsersService, UsersService>();

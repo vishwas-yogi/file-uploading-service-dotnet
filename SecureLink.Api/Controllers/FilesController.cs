@@ -1,22 +1,30 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using SecureLink.Core.Contracts;
 
 namespace SecureLink.Api.Controllers;
 
+[Authorize]
 // TODO: Add a cancellation token
 [ApiController]
 [Route("files")]
-public class FileController(IFileService fileService, ILogger<FileController> logger)
+public class FilesController(IFilesService fileService, ILogger<FilesController> logger)
     : ControllerBase
 {
-    private readonly ILogger<FileController> _logger = logger;
-    private readonly IFileService _fileService = fileService;
+    private readonly ILogger<FilesController> _logger = logger;
+    private readonly IFilesService _fileService = fileService;
 
     [HttpPost]
     [Route("")]
-    public async Task<ActionResult<string>> Upload()
+    public async Task<ActionResult<List<string>>> Upload()
     {
+        var currentUser =
+            User.GetUserId()
+            ?? throw new InvalidOperationException(
+                "Unable to resolve the logged in user. If the error persists, kindly contact the administrator"
+            );
+
         _logger.LogInformation("Controller UploadFile invoked with Request: {Request}", Request);
 
         if (!Request.ContentType?.StartsWith("multipart/form-data") ?? true)
@@ -32,7 +40,7 @@ public class FileController(IFileService fileService, ILogger<FileController> lo
         {
             return BadRequest("Boundary can't be null");
         }
-        var response = await _fileService.Upload(boundary, Request.Body);
+        var response = await _fileService.Upload(boundary, Request.Body, currentUser);
 
         if (!response.IsSuccess)
         {
@@ -43,7 +51,7 @@ public class FileController(IFileService fileService, ILogger<FileController> lo
             };
         }
 
-        return Ok("File is located at: " + response.Data);
+        return Ok(response.Data);
     }
 
     [HttpGet]

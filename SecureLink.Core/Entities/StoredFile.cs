@@ -1,3 +1,5 @@
+using SecureLink.Core.Contracts;
+
 namespace SecureLink.Core.Entities;
 
 public class StoredFile
@@ -6,8 +8,9 @@ public class StoredFile
     public required string Filename { get; set; }
     public required string UserFilename { get; set; }
     public required string ContentType { get; set; }
-    public required string Location { get; set; }
+    public string? Location { get; set; }
     public required Guid Owner { get; set; }
+    public FileStatus Status { get; set; } = FileStatus.Pending;
     public string Metadata { get; set; } = "{}";
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? LastModifiedAt { get; set; }
