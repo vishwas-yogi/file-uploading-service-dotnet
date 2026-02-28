@@ -2,7 +2,7 @@ namespace SecureLink.Core.Contracts;
 
 public interface IFilesService
 {
-    public Task<ServiceResult<List<string>, FileUploadErrorDetails>> Upload(
+    public Task<ServiceResult<List<FileUploadResponse>, FileUploadErrorDetails>> Upload(
         string boundary,
         Stream inputStream,
         Guid currentUser

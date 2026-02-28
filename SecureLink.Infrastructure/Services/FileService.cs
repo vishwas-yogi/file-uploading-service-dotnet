@@ -20,13 +20,13 @@ public class FilesService(
     private readonly FileValidator _validator = validator;
     private readonly FileRepository _fileRepository = fileRepository;
 
-    public async Task<ServiceResult<List<string>, FileUploadErrorDetails>> Upload(
+    public async Task<ServiceResult<List<FileUploadResponse>, FileUploadErrorDetails>> Upload(
         string boundary,
         Stream uploadedFileStream,
         Guid currentUser
     )
     {
-        List<string> outputFilePaths = [];
+        List<FileUploadResponse> results = [];
         var reader = new MultipartReader(boundary, uploadedFileStream);
         MultipartSection? section;
         long totalBytesRead = 0;
@@ -35,13 +35,18 @@ public class FilesService(
         {
             var contentDispositionHeader = section.GetContentDispositionHeader();
             var contentType = section.ContentType;
+            var response = new FileUploadResponse();
 
             var reqHeaderValidationResult = _validator.ValidateHeader(contentDispositionHeader);
             if (!reqHeaderValidationResult.IsValid)
             {
-                return ServiceResult<List<string>, FileUploadErrorDetails>.ValidationError(
-                    reqHeaderValidationResult.Error!
-                );
+                response.Error = reqHeaderValidationResult.Error;
+                response.IsError = true;
+                results.Add(response);
+                // return ServiceResult<List<string>, FileUploadErrorDetails>.ValidationError(
+                //     reqHeaderValidationResult.Error!
+                // );
+                continue;
             }
 
             Stream content = section.Body;
@@ -57,6 +62,7 @@ public class FilesService(
                 int bytesRead = await bufferedStream.ReadAsync(header.AsMemory(0, 32));
 
                 var originalFileName = contentDispositionHeader!.FileName.Value;
+                response.Filename = originalFileName;
                 var fileValidation = _validator.ValidateFile(
                     originalFileName!,
                     contentType!,
@@ -66,9 +72,13 @@ public class FilesService(
 
                 if (!fileValidation.IsValid)
                 {
-                    return ServiceResult<List<string>, FileUploadErrorDetails>.ValidationError(
-                        fileValidation.Error!
-                    );
+                    response.IsError = true;
+                    response.Error = fileValidation.Error;
+                    results.Add(response);
+                    // return ServiceResult<List<string>, FileUploadErrorDetails>.ValidationError(
+                    //     fileValidation.Error!
+                    // );
+                    continue;
                 }
 
                 // Reset the stream after peeking
@@ -96,11 +106,15 @@ public class FilesService(
                 );
 
                 if (!result.IsSuccess)
-                    return ServiceResult<List<string>, FileUploadErrorDetails>.UnexpectedError(
-                        result.Error!
-                    );
+                {
+                    response.IsError = true;
+                    response.Error = result.Error;
+                    results.Add(response);
+                    continue;
+                }
 
-                outputFilePaths.Add(result.Data!);
+                response.Id = result.Data;
+                results.Add(response);
                 totalBytesRead += content.Length;
             }
             // Else handle the metadata
@@ -121,7 +135,7 @@ public class FilesService(
             totalBytesRead
         );
 
-        return ServiceResult<List<string>, FileUploadErrorDetails>.Success(outputFilePaths);
+        return ServiceResult<List<FileUploadResponse>, FileUploadErrorDetails>.Success(results);
     }
 
     public async Task<ServiceResult<Stream, FileDownloadErrorDetails>> Download(string filename)
@@ -145,7 +159,7 @@ public class FilesService(
         }
     }
 
-    private async Task<ServiceResult<string, FileUploadErrorDetails>> Persist(
+    private async Task<ServiceResult<Guid, FileUploadErrorDetails>> Persist(
         FilePersistInternalRequest request
     )
     {
@@ -153,7 +167,7 @@ public class FilesService(
         {
             Guid fileId = await _fileRepository.Persist(request.RepoRequest);
             if (fileId == Guid.Empty)
-                return ServiceResult<string, FileUploadErrorDetails>.UnexpectedError(
+                return ServiceResult<Guid, FileUploadErrorDetails>.UnexpectedError(
                     new FileUploadErrorDetails
                     {
                         Message = "Failed to initialize file record in the db.",
@@ -165,7 +179,7 @@ public class FilesService(
                 request.RepoRequest.Filename
             );
             if (string.IsNullOrEmpty(uplaodedFileLocation))
-                return ServiceResult<string, FileUploadErrorDetails>.UnexpectedError(
+                return ServiceResult<Guid, FileUploadErrorDetails>.UnexpectedError(
                     new FileUploadErrorDetails
                     {
                         Message = "Failed to upload file to storage service ",
@@ -174,11 +188,11 @@ public class FilesService(
 
             var updated = await _fileRepository.MarkFileAvailable(fileId, uplaodedFileLocation);
             if (!updated)
-                return ServiceResult<string, FileUploadErrorDetails>.UnexpectedError(
+                return ServiceResult<Guid, FileUploadErrorDetails>.UnexpectedError(
                     new FileUploadErrorDetails { Message = "Failed to mark the file as available" }
                 );
 
-            return ServiceResult<string, FileUploadErrorDetails>.Success(uplaodedFileLocation);
+            return ServiceResult<Guid, FileUploadErrorDetails>.Success(fileId);
         }
         catch (Exception ex)
         {
@@ -187,7 +201,7 @@ public class FilesService(
                 "Unexpected error while uploading file {filename}",
                 request.RepoRequest.Filename
             );
-            return ServiceResult<string, FileUploadErrorDetails>.UnexpectedError(
+            return ServiceResult<Guid, FileUploadErrorDetails>.UnexpectedError(
                 new FileUploadErrorDetails
                 {
                     Message =

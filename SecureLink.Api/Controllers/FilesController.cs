@@ -17,7 +17,7 @@ public class FilesController(IFilesService fileService, ILogger<FilesController>
 
     [HttpPost]
     [Route("")]
-    public async Task<ActionResult<List<string>>> Upload()
+    public async Task<ActionResult<List<FileUploadResponse>>> Upload()
     {
         var currentUser =
             User.GetUserId()
