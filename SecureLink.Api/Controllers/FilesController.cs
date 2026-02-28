@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
@@ -55,14 +56,18 @@ public class FilesController(IFilesService fileService, ILogger<FilesController>
     }
 
     [HttpGet]
-    // For now keeping it to filename as there is no DB.
-    // TODO: Once DB is setup change this to fileId.
-    [Route("{filename}")]
-    public async Task<ActionResult> Download([FromRoute] string filename)
+    [Route("{fileId}")]
+    public async Task<ActionResult> Download([FromRoute] Guid fileId)
     {
+        var currentUser =
+            User.GetUserId()
+            ?? throw new InvalidOperationException(
+                "Unable to resolve the logged in user. If the error persists, kindly contact the administrator"
+            );
+
         _logger.LogInformation("Controller UploadFile invoked with Request: {Request}", Request);
 
-        var response = await _fileService.Download(filename);
+        var response = await _fileService.Download(fileId, currentUser);
 
         if (!response.IsSuccess)
         {
@@ -74,12 +79,14 @@ public class FilesController(IFilesService fileService, ILogger<FilesController>
             };
         }
 
-        // For now harcoding this
-        // TODO: Once DB is setup, will get it from there
-        var contentType = "application/octet-stream";
+        var fileStream = response.Data!.FileStream;
+        var fileDetails = response.Data.FileDetails;
+        Response.Headers.Append("X-File-Metadata", JsonSerializer.Serialize(fileDetails));
 
-        // File() already sets the Status code to 200. So need to wrap it in Ok()
+        var contentType = fileDetails!.ContentType;
+
+        // File() already sets the Status code to 200. So no need to wrap it in Ok()
         // TODO: Research and enhance this to allow user to play / pause stream
-        return File(response.Data!, contentType, filename, true);
+        return File(fileStream!, contentType, fileDetails.UserFilename, true);
     }
 }

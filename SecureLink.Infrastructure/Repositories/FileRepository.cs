@@ -1,6 +1,8 @@
+using System.Reflection.Metadata.Ecma335;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using SecureLink.Core.Contracts;
+using SecureLink.Core.Entities;
 using SecureLink.Infrastructure.Contracts;
 
 namespace SecureLink.Infrastructure.Repositories;
@@ -9,6 +11,24 @@ public class FileRepository(ILogger<FileRepository> logger, IDapperContext dappe
     : RepositoryBase(dapperContext)
 {
     private ILogger<FileRepository> _logger = logger;
+    private string _selectColumns =
+        "id, filename, user_filename, content_type, location, owner, status, created_at, last_modified_at";
+
+    public async Task<StoredFile?> Get(FileGetRepoRequest request)
+    {
+        _logger.LogInformation("File get initiating for file: {fileId}", request.Id);
+
+        var sql = $"""
+            select {_selectColumns}
+            from files
+            where id = @Id and owner = @Owner;
+            """;
+
+        var variables = new { request.Id, request.Owner };
+
+        using var connection = DbContext.CreateConnection();
+        return await connection.QuerySingleOrDefaultAsync<StoredFile?>(sql, variables);
+    }
 
     public async Task<Guid> Persist(FilePersistRepoRequest request)
     {

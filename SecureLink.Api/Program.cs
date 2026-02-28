@@ -47,7 +47,7 @@ builder.Services.AddScoped<IFilesService, FilesService>();
 builder.Services.AddScoped<FileValidator>();
 
 // TODO: Add an S3 storage service as well.
-builder.Services.AddScoped<IFileRepository, LocalStoreRepository>();
+builder.Services.AddScoped<IUploadService, LocalStoreRepository>();
 builder.Services.Configure<DapperOptions>(builder.Configuration.GetSection("Dapper"));
 builder.Services.AddSingleton<IDapperContext, DapperContext>();
 builder.Services.AddScoped<FileRepository>();

@@ -4,19 +4,20 @@ using Microsoft.Net.Http.Headers;
 using SecureLink.Core;
 using SecureLink.Core.Contracts;
 using SecureLink.Infrastructure.Contracts;
+using SecureLink.Infrastructure.Helpers;
 using SecureLink.Infrastructure.Repositories;
 
 namespace SecureLink.Infrastructure.Services;
 
 public class FilesService(
-    IFileRepository repository,
+    IUploadService uploadService,
     FileValidator validator,
     FileRepository fileRepository,
     ILogger<FilesService> logger
 ) : IFilesService
 {
     private readonly ILogger<FilesService> _logger = logger;
-    private readonly IFileRepository _repository = repository;
+    private readonly IUploadService _uploadService = uploadService;
     private readonly FileValidator _validator = validator;
     private readonly FileRepository _fileRepository = fileRepository;
 
@@ -138,22 +139,43 @@ public class FilesService(
         return ServiceResult<List<FileUploadResponse>, FileUploadErrorDetails>.Success(results);
     }
 
-    public async Task<ServiceResult<Stream, FileDownloadErrorDetails>> Download(string filename)
+    public async Task<
+        ServiceResult<FileDownloadServiceResponse, FileDownloadErrorDetails>
+    > Download(Guid fileId, Guid currentUserId)
     {
-        var fileValidation = await _validator.ValidateFileForDownload(filename);
-        if (!fileValidation.IsValid)
-            return ServiceResult<Stream, FileDownloadErrorDetails>.ValidationError(
-                fileValidation.Error!
+        var file = await _fileRepository.Get(
+            new FileGetRepoRequest { Id = fileId, Owner = currentUserId }
+        );
+        _logger.LogInformation("Fetched file: {response}", file);
+
+        if (file is null || file.Status != FileStatus.Available)
+        {
+            return ServiceResult<FileDownloadServiceResponse, FileDownloadErrorDetails>.NotFound(
+                new FileDownloadErrorDetails { Error = "Unable to find requested file" }
             );
+        }
+
+        var fileValidation = await _validator.ValidateFileForDownload(file.Filename);
+        if (!fileValidation.IsValid)
+            return ServiceResult<
+                FileDownloadServiceResponse,
+                FileDownloadErrorDetails
+            >.ValidationError(fileValidation.Error!);
 
         try
         {
-            var result = await _repository.Download(filename);
-            return ServiceResult<Stream, FileDownloadErrorDetails>.Success(result);
+            var fileStream = await _uploadService.Download(file.Filename);
+            return ServiceResult<FileDownloadServiceResponse, FileDownloadErrorDetails>.Success(
+                new FileDownloadServiceResponse
+                {
+                    FileDetails = file.ToDto(),
+                    FileStream = fileStream,
+                }
+            );
         }
         catch (FileNotFoundException)
         {
-            return ServiceResult<Stream, FileDownloadErrorDetails>.ValidationError(
+            return ServiceResult<FileDownloadServiceResponse, FileDownloadErrorDetails>.NotFound(
                 new FileDownloadErrorDetails { Error = "File not found" }
             );
         }
@@ -174,7 +196,7 @@ public class FilesService(
                     }
                 );
 
-            string uplaodedFileLocation = await _repository.Upload(
+            string uplaodedFileLocation = await _uploadService.Upload(
                 request.UploadedFileStream,
                 request.RepoRequest.Filename
             );

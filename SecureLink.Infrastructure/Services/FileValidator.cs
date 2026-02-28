@@ -5,9 +5,9 @@ using static SecureLink.Core.Helpers.FileValidationDefinitions;
 
 namespace SecureLink.Infrastructure.Services;
 
-public class FileValidator(IFileRepository fileRepository)
+public class FileValidator(IUploadService uploadService)
 {
-    private readonly IFileRepository _repository = fileRepository;
+    private readonly IUploadService _uploadService = uploadService;
 
     public ValidationResult<FileUploadErrorDetails> ValidateFile(
         string? fileName,
@@ -68,7 +68,7 @@ public class FileValidator(IFileRepository fileRepository)
         string filename
     )
     {
-        var fileExists = await _repository.FileExists(filename);
+        var fileExists = await _uploadService.FileExists(filename);
 
         if (!fileExists)
         {

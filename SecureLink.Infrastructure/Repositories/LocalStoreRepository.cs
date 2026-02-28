@@ -3,7 +3,7 @@ using SecureLink.Core.Contracts;
 
 namespace SecureLink.Infrastructure.Repositories;
 
-public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IFileRepository
+public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IUploadService
 {
     private readonly ILogger<LocalStoreRepository> _logger = logger;
 

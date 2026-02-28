@@ -7,5 +7,8 @@ public interface IFilesService
         Stream inputStream,
         Guid currentUser
     );
-    public Task<ServiceResult<Stream, FileDownloadErrorDetails>> Download(string filename);
+    public Task<ServiceResult<FileDownloadServiceResponse, FileDownloadErrorDetails>> Download(
+        Guid fileId,
+        Guid currentUserId
+    );
 }
