@@ -20,11 +20,11 @@ public class FilesController(IFilesService fileService, ILogger<FilesController>
     [Route("")]
     public async Task<ActionResult<List<FileUploadResponse>>> Upload()
     {
-        var currentUser =
-            User.GetUserId()
-            ?? throw new InvalidOperationException(
-                "Unable to resolve the logged in user. If the error persists, kindly contact the administrator"
-            );
+        var currentUser = User.GetUserId();
+        if (currentUser is null)
+        {
+            return Unauthorized("Unable to resolve the logged in user");
+        }
 
         _logger.LogInformation("Controller UploadFile invoked with Request: {Request}", Request);
 
@@ -41,7 +41,7 @@ public class FilesController(IFilesService fileService, ILogger<FilesController>
         {
             return BadRequest("Boundary can't be null");
         }
-        var response = await _fileService.Upload(boundary, Request.Body, currentUser);
+        var response = await _fileService.Upload(boundary, Request.Body, currentUser.Value);
 
         if (!response.IsSuccess)
         {
@@ -59,15 +59,15 @@ public class FilesController(IFilesService fileService, ILogger<FilesController>
     [Route("{fileId}")]
     public async Task<ActionResult> Download([FromRoute] Guid fileId)
     {
-        var currentUser =
-            User.GetUserId()
-            ?? throw new InvalidOperationException(
-                "Unable to resolve the logged in user. If the error persists, kindly contact the administrator"
-            );
+        var currentUser = User.GetUserId();
+        if (currentUser is null)
+        {
+            return Unauthorized("Unable to resolve the logged in user");
+        }
 
-        _logger.LogInformation("Controller UploadFile invoked with Request: {Request}", Request);
+        _logger.LogInformation("Controller DownloadFile invoked with Request: {Request}", Request);
 
-        var response = await _fileService.Download(fileId, currentUser);
+        var response = await _fileService.Download(fileId, currentUser.Value);
 
         if (!response.IsSuccess)
         {
@@ -87,6 +87,6 @@ public class FilesController(IFilesService fileService, ILogger<FilesController>
 
         // File() already sets the Status code to 200. So no need to wrap it in Ok()
         // TODO: Research and enhance this to allow user to play / pause stream
-        return File(fileStream!, contentType, fileDetails.UserFilename, true);
+        return File(fileStream!, contentType, fileDetails.Filename, true);
     }
 }

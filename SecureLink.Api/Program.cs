@@ -44,10 +44,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IFilesService, FilesService>();
 
 // TODO: check on implementing a interface instead of directly injecting validator
-builder.Services.AddScoped<FileValidator>();
+builder.Services.AddScoped<FilesValidator>();
 
 // TODO: Add an S3 storage service as well.
-builder.Services.AddScoped<IUploadService, LocalStoreRepository>();
+builder.Services.AddScoped<IStorageService, LocalStoreRepository>();
 builder.Services.Configure<DapperOptions>(builder.Configuration.GetSection("Dapper"));
 builder.Services.AddSingleton<IDapperContext, DapperContext>();
 builder.Services.AddScoped<IFilesRepository, FilesRepository>();

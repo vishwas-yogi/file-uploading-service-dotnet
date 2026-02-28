@@ -5,13 +5,13 @@ using static SecureLink.Core.Helpers.FileValidationDefinitions;
 
 namespace SecureLink.Infrastructure.Services;
 
-public class FileValidator(IUploadService uploadService)
+public class FilesValidator(IStorageService storageService)
 {
-    private readonly IUploadService _uploadService = uploadService;
+    private readonly IStorageService _storageService = storageService;
 
     public ValidationResult<FileUploadErrorDetails> ValidateFile(
         string? fileName,
-        string mimeType,
+        string? mimeType,
         byte[] fileInitialBytes,
         int bytesRead
     )
@@ -68,7 +68,7 @@ public class FileValidator(IUploadService uploadService)
         string filename
     )
     {
-        var fileExists = await _uploadService.FileExists(filename);
+        var fileExists = await _storageService.FileExists(filename);
 
         if (!fileExists)
         {
@@ -99,7 +99,7 @@ public class FileValidator(IUploadService uploadService)
 
     private static ValidationResult<FileUploadErrorDetails> ValidateFileInternal(
         string filename,
-        string mimeType,
+        string? mimeType,
         byte[] fileInitialBytes,
         int bytesRead
     )

@@ -1,6 +1,6 @@
 namespace SecureLink.Core.Contracts;
 
-public interface IUploadService
+public interface IStorageService
 {
     public Task<string> Upload(Stream file, string fileName);
     public Task<Stream> Download(string fileName);

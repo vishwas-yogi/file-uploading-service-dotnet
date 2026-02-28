@@ -11,8 +11,8 @@ public class FilesRepository(ILogger<FilesRepository> logger, IDapperContext dap
     : RepositoryBase(dapperContext),
         IFilesRepository
 {
-    private ILogger<FilesRepository> _logger = logger;
-    private string _selectColumns =
+    private readonly ILogger<FilesRepository> _logger = logger;
+    private readonly string _selectColumns =
         "id, filename, user_filename, content_type, location, owner, status, created_at, last_modified_at";
 
     public async Task<StoredFile?> Get(FileGetRepoRequest request)

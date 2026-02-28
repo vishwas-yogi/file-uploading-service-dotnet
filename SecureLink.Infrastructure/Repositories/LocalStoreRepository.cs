@@ -3,7 +3,7 @@ using SecureLink.Core.Contracts;
 
 namespace SecureLink.Infrastructure.Repositories;
 
-public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IUploadService
+public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IStorageService
 {
     private readonly ILogger<LocalStoreRepository> _logger = logger;
 
@@ -66,7 +66,7 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IUploa
         if (await FileExistsInternal(filePath))
         {
             File.Delete(filePath);
-            _logger.LogInformation($"Deleted file: {filePath}");
+            _logger.LogInformation("Deleted file: {filePath}", filePath);
         }
     }
 

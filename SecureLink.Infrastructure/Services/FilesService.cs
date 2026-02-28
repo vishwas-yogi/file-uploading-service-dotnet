@@ -5,20 +5,19 @@ using SecureLink.Core;
 using SecureLink.Core.Contracts;
 using SecureLink.Infrastructure.Contracts;
 using SecureLink.Infrastructure.Helpers;
-using SecureLink.Infrastructure.Repositories;
 
 namespace SecureLink.Infrastructure.Services;
 
 public class FilesService(
-    IUploadService uploadService,
-    FileValidator validator,
+    IStorageService storageService,
+    FilesValidator validator,
     IFilesRepository filesRepository,
     ILogger<FilesService> logger
 ) : IFilesService
 {
     private readonly ILogger<FilesService> _logger = logger;
-    private readonly IUploadService _uploadService = uploadService;
-    private readonly FileValidator _validator = validator;
+    private readonly IStorageService _storageService = storageService;
+    private readonly FilesValidator _validator = validator;
     private readonly IFilesRepository _filesRepository = filesRepository;
 
     public async Task<ServiceResult<List<FileUploadResponse>, FileUploadErrorDetails>> Upload(
@@ -44,9 +43,6 @@ public class FilesService(
                 response.Error = reqHeaderValidationResult.Error;
                 response.IsError = true;
                 results.Add(response);
-                // return ServiceResult<List<string>, FileUploadErrorDetails>.ValidationError(
-                //     reqHeaderValidationResult.Error!
-                // );
                 continue;
             }
 
@@ -65,8 +61,8 @@ public class FilesService(
                 var originalFileName = contentDispositionHeader!.FileName.Value;
                 response.Filename = originalFileName;
                 var fileValidation = _validator.ValidateFile(
-                    originalFileName!,
-                    contentType!,
+                    originalFileName,
+                    contentType,
                     header,
                     bytesRead
                 );
@@ -76,9 +72,6 @@ public class FilesService(
                     response.IsError = true;
                     response.Error = fileValidation.Error;
                     results.Add(response);
-                    // return ServiceResult<List<string>, FileUploadErrorDetails>.ValidationError(
-                    //     fileValidation.Error!
-                    // );
                     continue;
                 }
 
@@ -146,7 +139,6 @@ public class FilesService(
         var file = await _filesRepository.Get(
             new FileGetRepoRequest { Id = fileId, Owner = currentUserId }
         );
-        _logger.LogInformation("Fetched file: {response}", file);
 
         if (file is null || file.Status != FileStatus.Available)
         {
@@ -156,15 +148,16 @@ public class FilesService(
         }
 
         var fileValidation = await _validator.ValidateFileForDownload(file.Filename);
+        // Although it is in validator for now, but it checks the storage existenece
+        // So instead of retuning validation error, returning 404 for now
         if (!fileValidation.IsValid)
-            return ServiceResult<
-                FileDownloadServiceResponse,
-                FileDownloadErrorDetails
-            >.ValidationError(fileValidation.Error!);
+            return ServiceResult<FileDownloadServiceResponse, FileDownloadErrorDetails>.NotFound(
+                fileValidation.Error!
+            );
 
         try
         {
-            var fileStream = await _uploadService.Download(file.Filename);
+            var fileStream = await _storageService.Download(file.Filename);
             return ServiceResult<FileDownloadServiceResponse, FileDownloadErrorDetails>.Success(
                 new FileDownloadServiceResponse
                 {
@@ -196,7 +189,7 @@ public class FilesService(
                     }
                 );
 
-            string uplaodedFileLocation = await _uploadService.Upload(
+            string uplaodedFileLocation = await _storageService.Upload(
                 request.UploadedFileStream,
                 request.RepoRequest.Filename
             );

@@ -1,4 +1,11 @@
-CREATE TYPE file_status AS ENUM ('Pending', 'Available', 'CleanupRequired', 'Deleted');
+--- To make the enum creation idempotent
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'file_status') THEN
+        CREATE TYPE file_status AS ENUM ('Pending', 'Available', 'CleanupRequired', 'Deleted');
+    END IF;
+END
+$$;
 
 CREATE TABLE IF NOT EXISTS files
 (

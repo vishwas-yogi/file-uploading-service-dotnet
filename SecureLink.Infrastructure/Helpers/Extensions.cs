@@ -20,10 +20,10 @@ internal static class Extensions
         new()
         {
             Id = f.Id,
-            UserFilename = f.UserFilename,
+            Filename = f.UserFilename,
             ContentType = f.ContentType,
-            Owner = f.Owner,
             LastModifiedAt = f.LastModifiedAt,
             CreatedAt = f.CreatedAt,
+            Status = f.Status,
         };
 }
