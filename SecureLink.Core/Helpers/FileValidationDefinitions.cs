@@ -7,19 +7,20 @@ public static class FileValidationDefinitions
     public static readonly Dictionary<string, FileTypeValidation> AllowedTypes = new(
         StringComparer.OrdinalIgnoreCase
     )
+    // For now only allowing images
     {
-        {
-            ".pdf",
-            new FileTypeValidation
-            {
-                Extension = ".pdf",
-                MimeType = "application/pdf",
-                MagicBytes =
-                [
-                    [0x25, 0x50, 0x44, 0x46],
-                ], // %PDF
-            }
-        },
+        // {
+        //     ".pdf",
+        //     new FileTypeValidation
+        //     {
+        //         Extension = ".pdf",
+        //         MimeType = "application/pdf",
+        //         MagicBytes =
+        //         [
+        //             [0x25, 0x50, 0x44, 0x46],
+        //         ], // %PDF
+        //     }
+        // },
         {
             ".png",
             new FileTypeValidation
@@ -58,18 +59,18 @@ public static class FileValidationDefinitions
                 ],
             }
         },
-        {
-            ".mp4",
-            new FileTypeValidation
-            {
-                Extension = ".mp4",
-                MimeType = "video/mp4",
-                MagicBytes =
-                [
-                    [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], // ftyp...
-                    [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
-                ],
-            }
-        },
+        // {
+        //     ".mp4",
+        //     new FileTypeValidation
+        //     {
+        //         Extension = ".mp4",
+        //         MimeType = "video/mp4",
+        //         MagicBytes =
+        //         [
+        //             [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], // ftyp...
+        //             [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
+        //         ],
+        //     }
+        // },
     };
 }

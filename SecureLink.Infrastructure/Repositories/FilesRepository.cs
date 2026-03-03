@@ -12,7 +12,7 @@ public class FilesRepository(ILogger<FilesRepository> logger, IDapperContext dap
 {
     private readonly ILogger<FilesRepository> _logger = logger;
     private readonly string _selectColumns =
-        "id, filename, user_filename, content_type, location, owner, status, created_at, last_modified_at";
+        "id, filename, user_filename, content_type, metadata, location, owner, status, created_at, last_modified_at";
 
     public async Task<StoredFile?> Get(FileGetRepoRequest request)
     {
@@ -102,7 +102,7 @@ public class FilesRepository(ILogger<FilesRepository> logger, IDapperContext dap
         var sql = """
                 update files
                 set
-                    metadata = metadata || jsonb_build_object('thumbkey', @ThumbKey)
+                    metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('thumbkey', @ThumbKey)
                 where id = @Id;
             """;
 
