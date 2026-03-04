@@ -119,7 +119,7 @@ public class FilesService(
 
                 // As the response is successful,
                 // Add the file to the queue for thumbnail generation
-                await _thumbnailQueue.QueueAsync(
+                await AddThumbnailJob(
                     new ThumbnailJob
                     {
                         FileId = fileId,
@@ -258,6 +258,22 @@ public class FilesService(
                     Message =
                         $"Something went wrong while uplaoding file: {request.RepoRequest.UserFilename}",
                 }
+            );
+        }
+    }
+
+    private async Task AddThumbnailJob(ThumbnailJob job)
+    {
+        try
+        {
+            await _thumbnailQueue.QueueAsync(job);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to enqueue thumbnail job for fileId: {fileId}",
+                job.FileId
             );
         }
     }

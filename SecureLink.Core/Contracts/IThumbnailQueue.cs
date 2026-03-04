@@ -2,6 +2,6 @@ namespace SecureLink.Core.Contracts;
 
 public interface IThumbnailQueue
 {
-    ValueTask QueueAsync(ThumbnailJob job);
-    ValueTask<ThumbnailJob> DequeueAsync(CancellationToken token);
+    ValueTask QueueAsync(ThumbnailJob job, CancellationToken token = default);
+    ValueTask<ThumbnailJob> DequeueAsync(CancellationToken token = default);
 }

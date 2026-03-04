@@ -20,8 +20,8 @@ public class ThumbnailQueue : IThumbnailQueue
         return await _channel.Reader.ReadAsync(token);
     }
 
-    public async ValueTask QueueAsync(ThumbnailJob job)
+    public async ValueTask QueueAsync(ThumbnailJob job, CancellationToken token)
     {
-        await _channel.Writer.WriteAsync(job);
+        await _channel.Writer.WriteAsync(job, token);
     }
 }

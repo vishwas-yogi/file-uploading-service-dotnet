@@ -17,20 +17,21 @@ public class ThumbnailBackgroundService(
     private readonly ILogger<ThumbnailBackgroundService> _logger = logger;
     private const int _maxRetries = 3;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken token)
     {
         _logger.LogInformation("Thumbnail Generation service started");
 
-        while (!stoppingToken.IsCancellationRequested)
+        while (!token.IsCancellationRequested)
         {
             try
             {
-                var job = await _queue.DequeueAsync(stoppingToken);
-                await ProcessThumbnail(job, stoppingToken);
+                var job = await _queue.DequeueAsync(token);
+                await ProcessThumbnail(job, token);
             }
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("Thumbnail processing terminating as requested");
+                break;
             }
             catch (Exception ex)
             {
@@ -55,9 +56,8 @@ public class ThumbnailBackgroundService(
             using var originalFile = await storageService.Download(job.StorageKey);
             using var thumbStream = await thumbnailService.CreateThumbnail(originalFile);
 
-            var extension = Path.GetExtension(job.Filename);
             var thumbFilename = $"{Path.GetFileNameWithoutExtension(job.Filename)}_thumbnail";
-            var thumbKey = Path.ChangeExtension(thumbFilename, extension);
+            var thumbKey = Path.ChangeExtension(thumbFilename, ".webp");
             var reskey = await storageService.Upload(thumbStream, thumbKey);
 
             // Update the thumbKey to db
@@ -66,11 +66,11 @@ public class ThumbnailBackgroundService(
         catch (Exception ex)
         {
             _logger.LogError(ex, "Processing failed for file: {fileId}", job.FileId);
-            await HandleRetry(job);
+            await HandleRetry(job, token);
         }
     }
 
-    private async Task HandleRetry(ThumbnailJob job)
+    private async Task HandleRetry(ThumbnailJob job, CancellationToken token)
     {
         if (job.RetryCount >= _maxRetries)
         {
@@ -80,7 +80,7 @@ public class ThumbnailBackgroundService(
 
         var retryJob = job with { RetryCount = job.RetryCount + 1 };
 
-        await Task.Delay(TimeSpan.FromSeconds(5));
-        await _queue.QueueAsync(retryJob);
+        await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryJob.RetryCount)));
+        await _queue.QueueAsync(retryJob, token);
     }
 }
