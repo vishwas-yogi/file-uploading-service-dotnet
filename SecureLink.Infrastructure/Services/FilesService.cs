@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using SecureLink.Core;
 using SecureLink.Core.Contracts;
+using SecureLink.Infrastructure.BackgroundServices.ThumbnailGenerationJob;
 using SecureLink.Infrastructure.Contracts;
 using SecureLink.Infrastructure.Helpers;
 
@@ -12,7 +13,7 @@ public class FilesService(
     IStorageService storageService,
     FilesValidator validator,
     IFilesRepository filesRepository,
-    IThumbnailService thumbnailService,
+    IThumbnailQueue thumbnailQueue,
     ILogger<FilesService> logger
 ) : IFilesService
 {
@@ -20,7 +21,7 @@ public class FilesService(
     private readonly IStorageService _storageService = storageService;
     private readonly FilesValidator _validator = validator;
     private readonly IFilesRepository _filesRepository = filesRepository;
-    private readonly IThumbnailService _thumbnailService = thumbnailService;
+    private readonly IThumbnailQueue _thumbnailQueue = thumbnailQueue;
 
     public async Task<ServiceResult<List<FileUploadResponse>, FileUploadErrorDetails>> Upload(
         string boundary,
@@ -110,18 +111,22 @@ public class FilesService(
                     continue;
                 }
 
-                response.Id = result.Data;
+                var fileId = result.Data!.FileId;
+                var storageKey = result.Data.StorageKey;
+
+                response.Id = fileId;
                 results.Add(response);
 
-                // Compress and persist the compressed image.
-                // First reset the stream.
-                // TODO: handoff the thumbnail generation to queue or background workers.
-                // For now keeping it sequencial
-                bufferedStream.Seek(0, SeekOrigin.Begin);
-                var thumbnailName = Path.ChangeExtension($"{outputFileName}_thumbnail", "webp");
-                using var thumbStream = await _thumbnailService.CreateThumbnail(bufferedStream);
-                var thumbnailKey = await _storageService.Upload(thumbStream, thumbnailName);
-                await _filesRepository.UpdateMetadata(result.Data, thumbnailKey);
+                // As the response is successful,
+                // Add the file to the queue for thumbnail generation
+                await _thumbnailQueue.QueueAsync(
+                    new ThumbnailJob
+                    {
+                        FileId = fileId,
+                        Filename = finalOutputFileName,
+                        StorageKey = storageKey,
+                    }
+                );
 
                 if (bufferedStream.CanSeek)
                 {
@@ -191,7 +196,7 @@ public class FilesService(
         }
     }
 
-    private async Task<ServiceResult<Guid, FileUploadErrorDetails>> Persist(
+    private async Task<ServiceResult<FilePersistInternalResponse, FileUploadErrorDetails>> Persist(
         FilePersistInternalRequest request
     )
     {
@@ -199,32 +204,43 @@ public class FilesService(
         {
             Guid fileId = await _filesRepository.Persist(request.RepoRequest);
             if (fileId == Guid.Empty)
-                return ServiceResult<Guid, FileUploadErrorDetails>.UnexpectedError(
+                return ServiceResult<
+                    FilePersistInternalResponse,
+                    FileUploadErrorDetails
+                >.UnexpectedError(
                     new FileUploadErrorDetails
                     {
                         Message = "Failed to initialize file record in the db.",
                     }
                 );
 
-            string uplaodedFileLocation = await _storageService.Upload(
+            string storedKey = await _storageService.Upload(
                 request.FileStream,
                 request.RepoRequest.Filename
             );
-            if (string.IsNullOrEmpty(uplaodedFileLocation))
-                return ServiceResult<Guid, FileUploadErrorDetails>.UnexpectedError(
+            if (string.IsNullOrEmpty(storedKey))
+                return ServiceResult<
+                    FilePersistInternalResponse,
+                    FileUploadErrorDetails
+                >.UnexpectedError(
                     new FileUploadErrorDetails
                     {
                         Message = "Failed to upload file to storage service ",
                     }
                 );
 
-            var updated = await _filesRepository.MarkFileAvailable(fileId, uplaodedFileLocation);
+            var updated = await _filesRepository.MarkFileAvailable(fileId, storedKey);
             if (!updated)
-                return ServiceResult<Guid, FileUploadErrorDetails>.UnexpectedError(
+                return ServiceResult<
+                    FilePersistInternalResponse,
+                    FileUploadErrorDetails
+                >.UnexpectedError(
                     new FileUploadErrorDetails { Message = "Failed to mark the file as available" }
                 );
 
-            return ServiceResult<Guid, FileUploadErrorDetails>.Success(fileId);
+            return ServiceResult<FilePersistInternalResponse, FileUploadErrorDetails>.Success(
+                new FilePersistInternalResponse { FileId = fileId, StorageKey = storedKey }
+            );
         }
         catch (Exception ex)
         {
@@ -233,7 +249,10 @@ public class FilesService(
                 "Unexpected error while uploading file {filename}",
                 request.RepoRequest.Filename
             );
-            return ServiceResult<Guid, FileUploadErrorDetails>.UnexpectedError(
+            return ServiceResult<
+                FilePersistInternalResponse,
+                FileUploadErrorDetails
+            >.UnexpectedError(
                 new FileUploadErrorDetails
                 {
                     Message =
@@ -247,5 +266,11 @@ public class FilesService(
     {
         public required FilePersistRepoRequest RepoRequest { get; init; }
         public required Stream FileStream { get; init; }
+    }
+
+    private record FilePersistInternalResponse
+    {
+        public required Guid FileId { get; init; }
+        public required string StorageKey { get; init; }
     }
 }

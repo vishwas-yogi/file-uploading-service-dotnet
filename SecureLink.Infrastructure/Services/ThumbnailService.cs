@@ -7,12 +7,8 @@ using SixLabors.ImageSharp.Processing;
 
 namespace SecureLink.Infrastructure.Services;
 
-public class ThumbnailService(IFilesRepository filesRepository, ILogger<ThumbnailService> logger)
-    : IThumbnailService
+public class ThumbnailService() : IThumbnailService
 {
-    private readonly IFilesRepository _filesRepository = filesRepository;
-    private readonly ILogger<ThumbnailService> _logger = logger;
-
     public async Task<Stream> CreateThumbnail(Stream input)
     {
         // Using `using` here would dispose the stream at the end of the method.

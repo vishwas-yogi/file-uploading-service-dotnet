@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using SecureLink.Core.Contracts;
+using SecureLink.Infrastructure.BackgroundServices.ThumbnailGenerationJob;
 using SecureLink.Infrastructure.Contracts;
 using SecureLink.Infrastructure.Helpers;
 using SecureLink.Infrastructure.Repositories;
@@ -47,11 +48,15 @@ builder.Services.AddScoped<IFilesService, FilesService>();
 builder.Services.AddScoped<FilesValidator>();
 
 // TODO: Add an S3 storage service as well.
-builder.Services.AddScoped<IStorageService, LocalStoreRepository>();
+builder.Services.AddSingleton<IStorageService, LocalStoreRepository>();
 builder.Services.Configure<DapperOptions>(builder.Configuration.GetSection("Dapper"));
 builder.Services.AddSingleton<IDapperContext, DapperContext>();
 builder.Services.AddScoped<IFilesRepository, FilesRepository>();
-builder.Services.AddScoped<IThumbnailService, ThumbnailService>();
+builder.Services.AddSingleton<IThumbnailService, ThumbnailService>();
+
+// Add background service for thumbnail
+builder.Services.AddSingleton<IThumbnailQueue, ThumbnailQueue>();
+builder.Services.AddHostedService<ThumbnailBackgroundService>();
 
 // User related services
 builder.Services.AddScoped<IUsersService, UsersService>();

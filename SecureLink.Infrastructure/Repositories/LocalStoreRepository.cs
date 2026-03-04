@@ -29,7 +29,7 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IStora
 
     public Task<Stream> Download(string filename)
     {
-        _logger.LogInformation("Starting download of the requested file");
+        _logger.LogInformation("Starting download of the file: {filename}", filename);
         var filePath = GetFullFilePath(filename);
 
         var options = new FileStreamOptions
@@ -41,6 +41,7 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IStora
         };
 
         var downloadStream = new FileStream(filePath, options);
+        _logger.LogInformation("Returned file stream for file: {filename}", filename);
         return Task.FromResult<Stream>(downloadStream);
     }
 
