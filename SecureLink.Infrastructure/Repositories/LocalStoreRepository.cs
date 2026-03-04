@@ -7,9 +7,9 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IStora
 {
     private readonly ILogger<LocalStoreRepository> _logger = logger;
 
-    public async Task<string> Upload(Stream file, string filename)
+    public async Task<string> Upload(Stream file, string storageKey)
     {
-        var outputFilePath = GetFullFilePath(filename);
+        var outputFilePath = GetFullFilePath(storageKey);
         await RemoveFileIfExists(outputFilePath);
 
         // Constuct FileStream for the output file
@@ -27,10 +27,10 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IStora
         return outputFilePath;
     }
 
-    public Task<Stream> Download(string filename)
+    public Task<Stream> Download(string storageKey)
     {
-        _logger.LogInformation("Starting download of the requested file");
-        var filePath = GetFullFilePath(filename);
+        _logger.LogInformation("Starting download of the file: {filename}", storageKey);
+        var filePath = GetFullFilePath(storageKey);
 
         var options = new FileStreamOptions
         {
@@ -41,21 +41,22 @@ public class LocalStoreRepository(ILogger<LocalStoreRepository> logger) : IStora
         };
 
         var downloadStream = new FileStream(filePath, options);
+        _logger.LogInformation("Returned file stream for file: {filename}", storageKey);
         return Task.FromResult<Stream>(downloadStream);
     }
 
-    public async Task<bool> FileExists(string filename)
+    public async Task<bool> FileExists(string storageKey)
     {
-        var filePath = GetFullFilePath(filename);
+        var filePath = GetFullFilePath(storageKey);
         if (await FileExistsInternal(filePath))
             return true;
 
         return false;
     }
 
-    private Task<bool> FileExistsInternal(string filePath)
+    private Task<bool> FileExistsInternal(string filename)
     {
-        if (File.Exists(filePath))
+        if (File.Exists(filename))
             return Task.FromResult(true);
 
         return Task.FromResult(false);
