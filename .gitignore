@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 
 
 uploads/
+
+# Python service related directories and files
+venv/

@@ -19,7 +19,7 @@ public class ThumbnailBackgroundService(
 
     protected override async Task ExecuteAsync(CancellationToken token)
     {
-        _logger.LogInformation("Thumbnail Generation service started");
+        _logger.LogInformation("Thumbnail generation background service is ready...");
 
         while (!token.IsCancellationRequested)
         {
@@ -39,7 +39,7 @@ public class ThumbnailBackgroundService(
             }
         }
 
-        _logger.LogInformation("Completed processing thumbnails");
+        _logger.LogInformation("Thumbnail generation background service is terminating...");
     }
 
     private async Task ProcessThumbnail(ThumbnailJob job, CancellationToken token)

@@ -230,6 +230,8 @@ public class FilesService(
                 );
 
             var updated = await _filesRepository.MarkFileAvailable(fileId, storedKey);
+            // File remains in Pending state; a background cleanup job will
+            // remove files stuck in Pending beyond the configured threshold.
             if (!updated)
                 return ServiceResult<
                     FilePersistInternalResponse,
